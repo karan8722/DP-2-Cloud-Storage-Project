@@ -1,0 +1,151 @@
+<!--
+=============================================================================
+AI Cloud Smart Storage System - Home Page
+=============================================================================
+This page provides:
+  1. File upload form (uploads to AWS S3)
+  2. Table showing all uploaded files with their details
+  3. Access simulation buttons (to test AI tier prediction)
+
+Technologies used: HTML, CSS, basic JavaScript
+=============================================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Cloud Smart Storage System</title>
+    <!-- Link to our custom CSS stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- ─── Navigation Bar ──────────────────────────────────────────────── -->
+    <nav class="navbar">
+        <div class="nav-brand">☁️ Cloud Storage With AI Optimization </div>
+        <div class="nav-links">
+            <a href="/" class="nav-link active">📁 Upload</a>
+            <a href="/dashboard" class="nav-link">📊 Dashboard</a>
+        </div>
+    </nav>
+
+    <!-- ─── Main Content ────────────────────────────────────────────────── -->
+    <div class="container">
+        
+        <!-- Flash Messages (success/error notifications) -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- ─── File Upload Section ─────────────────────────────────────── -->
+        <div class="card">
+            <h2>📤 Upload File to Cloud Storage</h2>
+            <p class="subtitle">Files are uploaded to AWS S3 and classified by AI into storage tiers.</p>
+            
+            <!-- 
+                File upload form:
+                - method="POST": sends data to server
+                - enctype="multipart/form-data": required for file uploads
+                - action="/upload": sends to the /upload route in app.py
+            -->
+            <form action="/upload" method="POST" enctype="multipart/form-data" class="upload-form">
+                <div class="file-input-wrapper">
+                    <input type="file" name="file" id="fileInput" required>
+                    <label for="fileInput" class="file-label">
+                        <span id="fileName">Choose a file...</span>
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    ☁️ Upload to Cloud
+                </button>
+            </form>
+        </div>
+
+        <!-- ─── Files Table Section ─────────────────────────────────────── -->
+        <div class="card">
+            <h2>📋 Uploaded Files ({{ files|length }} total)</h2>
+            
+            {% if files %}
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>File Name</th>
+                            <th>Size</th>
+                            <th>Access Count</th>
+                            <th>Last Access</th>
+                            <th>Storage Tier</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for file in files %}
+                        <tr>
+                            <td>{{ file['file_name'] }}</td>
+                            <!-- Display file size in human-readable format -->
+                            <td>
+                                {% if file['file_size'] > 1048576 %}
+                                    {{ "%.2f"|format(file['file_size'] / 1048576) }} MB
+                                {% elif file['file_size'] > 1024 %}
+                                    {{ "%.2f"|format(file['file_size'] / 1024) }} KB
+                                {% else %}
+                                    {{ file['file_size'] }} B
+                                {% endif %}
+                            </td>
+                            <td>{{ file['access_count'] }}</td>
+                            <td>{{ file['last_access'] }}</td>
+                            <!-- Color-coded storage tier badge -->
+                            <td>
+                                <span class="tier-badge tier-{{ file['storage_tier'] }}">
+                                    {% if file['storage_tier'] == 'hot' %} 🔥
+                                    {% elif file['storage_tier'] == 'warm' %} 🌤️
+                                    {% else %} ❄️
+                                    {% endif %}
+                                    {{ file['storage_tier']|upper }}
+                                </span>
+                            </td>
+                            <td>
+                                <!-- Simulate accessing the file (increments count) -->
+                                <a href="/access/{{ file['id'] }}" class="btn btn-small" style="margin-right: 0.5rem;">
+                                    👁️ Access
+                                </a>
+                                <!-- View the file directly from S3 -->
+                                <a href="{{ file['s3_url'] }}" target="_blank" class="btn btn-small btn-secondary">
+                                    🔗 View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <p class="empty-state">No files uploaded yet. Upload your first file above! ☝️</p>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- ─── Footer ──────────────────────────────────────────────────────── -->
+    <footer class="footer">
+        <p>AI Cloud Smart Storage System | Final Year Project | 2025</p>
+    </footer>
+
+    <!-- ─── JavaScript ──────────────────────────────────────────────────── -->
+    <script>
+        // Show selected file name in the upload form
+        document.getElementById('fileInput').addEventListener('change', function() {
+            var fileName = this.files[0] ? this.files[0].name : 'Choose a file...';
+            document.getElementById('fileName').textContent = fileName;
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!--
+=============================================================================
+AI Cloud Smart Storage System - Analytics Dashboard
+=============================================================================
+This page displays:
+  1. Summary statistics (total files, size, cost)
+  2. Storage tier distribution (Pie Chart)
+  3. Top accessed files (Bar Chart)
+  4. File details table
+
+Charts are created using Chart.js library (loaded from CDN).
+=============================================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - AI Cloud Smart Storage</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Chart.js library for creating charts (loaded from CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+</head>
+<body>
+
+    <!-- ─── Navigation Bar ──────────────────────────────────────────────── -->
+    <nav class="navbar">
+        <div class="nav-brand">☁️ AI Cloud Smart Storage</div>
+        <div class="nav-links">
+            <a href="/" class="nav-link">📁 Upload</a>
+            <a href="/dashboard" class="nav-link active">📊 Dashboard</a>
+        </div>
+    </nav>
+
+    <!-- ─── Main Content ────────────────────────────────────────────────── -->
+    <div class="container">
+        
+        <h1>📊 Analytics Dashboard</h1>
+
+        <!-- ─── Statistics Cards ────────────────────────────────────────── -->
+        <div class="stats-grid">
+            <!-- Card 1: Total Files -->
+            <div class="stat-card">
+                <div class="stat-icon">📁</div>
+                <div class="stat-value">{{ total_files }}</div>
+                <div class="stat-label">Total Files</div>
+            </div>
+
+            <!-- Card 2: Total Size -->
+            <div class="stat-card">
+                <div class="stat-icon">💾</div>
+                <div class="stat-value">{{ total_size_mb }} MB</div>
+                <div class="stat-label">Total Storage</div>
+            </div>
+
+            <!-- Card 3: Total Accesses -->
+            <div class="stat-card">
+                <div class="stat-icon">👁️</div>
+                <div class="stat-value">{{ total_accesses }}</div>
+                <div class="stat-label">Total Accesses</div>
+            </div>
+
+            <!-- Card 4: Estimated Cost -->
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-value">${{ estimated_cost }}</div>
+                <div class="stat-label">Monthly Cost</div>
+            </div>
+        </div>
+
+        <!-- ─── Storage Tier Summary ────────────────────────────────────── -->
+        <div class="tier-summary">
+            <div class="tier-card hot">
+                <h3>🔥 Hot Storage</h3>
+                <p class="tier-count">{{ hot_count }} files</p>
+                <p class="tier-desc">Frequently accessed, fast retrieval</p>
+            </div>
+            <div class="tier-card warm">
+                <h3>🌤️ Warm Storage</h3>
+                <p class="tier-count">{{ warm_count }} files</p>
+                <p class="tier-desc">Occasionally accessed, moderate speed</p>
+            </div>
+            <div class="tier-card cold">
+                <h3>❄️ Cold Storage</h3>
+                <p class="tier-count">{{ cold_count }} files</p>
+                <p class="tier-desc">Rarely accessed, cost-optimized</p>
+            </div>
+        </div>
+
+        <!-- ─── Charts Section ──────────────────────────────────────────── -->
+        <div class="charts-grid">
+            <!-- Pie Chart: Storage Tier Distribution -->
+            <div class="card chart-card">
+                <h3>Storage Tier Distribution</h3>
+                <canvas id="tierChart"></canvas>
+            </div>
+
+            <!-- Bar Chart: Top Accessed Files -->
+            <div class="card chart-card">
+                <h3>Top Accessed Files</h3>
+                <canvas id="accessChart"></canvas>
+            </div>
+        </div>
+
+        <!-- ─── Detailed Files Table ────────────────────────────────────── -->
+        <div class="card">
+            <h2>📋 All Files Detail</h2>
+            {% if files %}
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>File Name</th>
+                            <th>Size</th>
+                            <th>Accesses</th>
+                            <th>Storage Tier</th>
+                            <th>Upload Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for file in files %}
+                        <tr>
+                            <td>{{ file['file_name'] }}</td>
+                            <td>
+                                {% if file['file_size'] > 1048576 %}
+                                    {{ "%.2f"|format(file['file_size'] / 1048576) }} MB
+                                {% elif file['file_size'] > 1024 %}
+                                    {{ "%.2f"|format(file['file_size'] / 1024) }} KB
+                                {% else %}
+                                    {{ file['file_size'] }} B
+                                {% endif %}
+                            </td>
+                            <td>{{ file['access_count'] }}</td>
+                            <td>
+                                <span class="tier-badge tier-{{ file['storage_tier'] }}">
+                                    {{ file['storage_tier']|upper }}
+                                </span>
+                            </td>
+                            <td>{{ file['upload_date'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <p class="empty-state">No files to display.</p>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- ─── Footer ──────────────────────────────────────────────────────── -->
+    <footer class="footer">
+        <p>AI Cloud Smart Storage System | Final Year Project | 2025</p>
+    </footer>
+
+    <!-- ─── Chart.js Scripts ────────────────────────────────────────────── -->
+    <script>
+        /*
+         * Fetch statistics from our Flask API endpoint (/api/stats)
+         * and create charts using Chart.js
+         *
+         * fetch() is a built-in JavaScript function to make HTTP requests
+         * .then() handles the response when it arrives
+         */
+        fetch('/api/stats')
+            .then(response => response.json())   // Convert response to JSON
+            .then(data => {
+                
+                // ── Pie Chart: Storage Tier Distribution ─────────────────
+                // Shows how many files are in each storage tier
+                var tierCtx = document.getElementById('tierChart').getContext('2d');
+                new Chart(tierCtx, {
+                    type: 'pie',                  // Pie chart type
+                    data: {
+                        labels: ['🔥 Hot', '🌤️ Warm', '❄️ Cold'],
+                        datasets: [{
+                            data: [
+                                data.tier_distribution.hot,
+                                data.tier_distribution.warm,
+                                data.tier_distribution.cold
+                            ],
+                            backgroundColor: [
+                                '#ef4444',        // Red for hot
+                                '#f59e0b',        // Orange for warm
+                                '#3b82f6'         // Blue for cold
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { font: { size: 14 } }
+                            }
+                        }
+                    }
+                });
+
+                // ── Bar Chart: Top Accessed Files ────────────────────────
+                // Shows the most frequently accessed files
+                var accessCtx = document.getElementById('accessChart').getContext('2d');
+                new Chart(accessCtx, {
+                    type: 'bar',                  // Bar chart type
+                    data: {
+                        // File names (shortened to 15 chars for display)
+                        labels: data.top_files.map(f => 
+                            f.name.length > 15 ? f.name.substring(0, 15) + '...' : f.name
+                        ),
+                        datasets: [{
+                            label: 'Access Count',
+                            data: data.top_files.map(f => f.accesses),
+                            backgroundColor: '#8b5cf6',   // Purple bars
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Access Count' }
+                            },
+                            x: {
+                                ticks: { maxRotation: 45 }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error loading chart data:', error);
+            });
+    </script>
+
+</body>
+</html>

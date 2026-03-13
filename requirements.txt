@@ -1,0 +1,10 @@
+# =============================================================================
+# Python Package Requirements
+# =============================================================================
+# Install all packages with: pip install -r requirements.txt
+
+flask>=3.0.0           # Web framework for building the app
+boto3>=1.34.0          # AWS SDK for Python (used for S3 uploads)
+scikit-learn>=1.5.0    # Machine learning library (for AI predictions)
+numpy>=2.0.0           # Numerical computing (required by scikit-learn)
+joblib>=1.3.2          # Used to save/load the trained AI model
