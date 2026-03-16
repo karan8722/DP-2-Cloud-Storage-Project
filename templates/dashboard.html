@@ -16,7 +16,7 @@ Charts are created using Chart.js library (loaded from CDN).
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - AI Cloud Smart Storage</title>
+    <title>Dashboard - CloudBox : AI Cloud Smart Storage System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <!-- Chart.js library for creating charts (loaded from CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
@@ -25,10 +25,11 @@ Charts are created using Chart.js library (loaded from CDN).
 
     <!-- ─── Navigation Bar ──────────────────────────────────────────────── -->
     <nav class="navbar">
-        <div class="nav-brand">☁️ AI Cloud Smart Storage</div>
+        <div class="nav-brand">☁️ CloudBox : AI Cloud Smart Storage System</div>
         <div class="nav-links">
             <a href="/" class="nav-link">📁 Upload</a>
             <a href="/dashboard" class="nav-link active">📊 Dashboard</a>
+            <a href="/logout" class="nav-link">🚪 Logout</a>
         </div>
     </nav>
 
@@ -151,7 +152,7 @@ Charts are created using Chart.js library (loaded from CDN).
 
     <!-- ─── Footer ──────────────────────────────────────────────────────── -->
     <footer class="footer">
-        <p>AI Cloud Smart Storage System | Final Year Project | 2025</p>
+        <p>CloudBox : AI Cloud Smart Storage System | 2025</p>
     </footer>
 
     <!-- ─── Chart.js Scripts ────────────────────────────────────────────── -->

@@ -18,14 +18,37 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 import sqlite3
 import os
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 
 # Import our custom modules
 from cloud.aws_upload import upload_to_s3       # Handles AWS S3 uploads
 from ai.predict import predict_storage_tier      # AI prediction function
 
+# ─── User Model for Flask-Login ──────────────────────────────────────────────
+class User(UserMixin):
+    def __init__(self, id, username, email):
+        self.id = id
+        self.username = username
+        self.email = email
+
 # ─── Create Flask App ─────────────────────────────────────────────────────────
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this'  # Required for flash messages
+
+# Flask-Login setup
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'  # Redirect to login if not authenticated
+
+@login_manager.user_loader
+def load_user(user_id):
+    conn = get_db()
+    user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+    conn.close()
+    if user:
+        return User(id=user['id'], username=user['username'], email=user['email'])
+    return None
 
 # ─── Database Setup ───────────────────────────────────────────────────────────
 DATABASE = 'database/storage.db'
@@ -41,10 +64,16 @@ def get_db():
 
 def init_db():
     """
-    Create the database table if it doesn't exist.
+    Create the database tables if they don't exist.
     This runs once when the app starts.
     
-    Table columns:
+    Tables:
+    - users: stores user accounts
+      - id: unique identifier (auto-incremented)
+      - username: unique username
+      - email: unique email
+      - password_hash: hashed password
+    - files: stores file metadata
       - id: unique identifier for each file (auto-incremented)
       - file_name: original name of the uploaded file
       - file_size: size in bytes
@@ -56,6 +85,14 @@ def init_db():
     """
     os.makedirs('database', exist_ok=True)  # Create folder if not exists
     conn = get_db()
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL
+        )
+    ''')
     conn.execute('''
         CREATE TABLE IF NOT EXISTS files (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -73,7 +110,62 @@ def init_db():
 
 # ─── Routes ───────────────────────────────────────────────────────────────────
 
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        if not username or not email or not password:
+            flash('All fields are required!', 'error')
+            return redirect(url_for('signup'))
+        
+        password_hash = generate_password_hash(password)
+        
+        conn = get_db()
+        try:
+            conn.execute('INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
+                        (username, email, password_hash))
+            conn.commit()
+            flash('Account created successfully! Please log in.', 'success')
+            return redirect(url_for('login'))
+        except sqlite3.IntegrityError:
+            flash('Username or email already exists!', 'error')
+        finally:
+            conn.close()
+    
+    return render_template('signup.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        conn = get_db()
+        user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
+        conn.close()
+        
+        if user and check_password_hash(user['password_hash'], password):
+            user_obj = User(id=user['id'], username=user['username'], email=user['email'])
+            login_user(user_obj)
+            flash('Logged in successfully!', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Invalid username or password!', 'error')
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('Logged out successfully!', 'success')
+    return redirect(url_for('login'))
+
 @app.route('/')
+@login_required
 def index():
     """
     Home page - shows the file upload form and list of uploaded files.
@@ -85,6 +177,7 @@ def index():
 
 
 @app.route('/upload', methods=['POST'])
+@login_required
 def upload_file():
     """
     Handle file upload:
@@ -142,6 +235,7 @@ def upload_file():
 
 
 @app.route('/access/<int:file_id>')
+@login_required
 def access_file(file_id):
     """
     Simulate accessing a file:
@@ -184,6 +278,7 @@ def access_file(file_id):
 
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
     """
     Analytics dashboard page.
@@ -230,6 +325,7 @@ def dashboard():
 
 
 @app.route('/api/stats')
+@login_required
 def api_stats():
     """
     API endpoint that returns statistics as JSON.
@@ -263,4 +359,4 @@ def api_stats():
 # ─── Start the Application ───────────────────────────────────────────────────
 if __name__ == '__main__':
     init_db()          # Create database table on startup
-    app.run(debug=True, port=5000)  # Run on http://localhost:5000
+    app.run(debug=True, host='0.0.0.0', port=5000)  # Run on http://localhost:5000

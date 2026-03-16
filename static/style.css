@@ -351,12 +351,35 @@ body {
     color: #1e293b;
 }
 
-/* ─── Empty State ─────────────────────────────────────────────────────────── */
-.empty-state {
-    text-align: center;
-    color: #94a3b8;
-    padding: 2rem;
-    font-size: 1.1rem;
+/* ─── Form Styles ────────────────────────────────────────────────────────── */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="email"]:focus,
+.form-group input[type="password"]:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 /* ─── Footer ──────────────────────────────────────────────────────────────── */

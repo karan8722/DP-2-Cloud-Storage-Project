@@ -1,6 +1,6 @@
 # ☁️ AI Cloud Smart Storage System
 
-## Final Year Project
+##  Design Project
 
 An intelligent cloud storage system that uses **Machine Learning** to automatically classify files into optimal storage tiers (Hot, Warm, Cold) based on usage patterns.
 
@@ -175,25 +175,7 @@ Open your web browser and go to:
 
 ---
 
-## 💡 Viva Questions & Answers
-
-**Q: Why did you choose Decision Tree?**
-A: Decision Trees are simple, interpretable, and work well for classification with clear boundaries. They create human-readable rules.
-
-**Q: What is the difference between hot, warm, and cold storage?**
-A: Hot = fast, expensive (SSD), for frequent access. Warm = moderate speed/cost. Cold = slow, cheap (tape/archive), for rarely accessed data.
-
-**Q: How does Flask work?**
-A: Flask is a Python web framework. It maps URLs to Python functions (routes). When a user visits a URL, Flask runs the corresponding function and returns HTML.
-
-**Q: Why SQLite instead of MySQL/PostgreSQL?**
-A: SQLite is serverless, file-based, and requires no setup — perfect for a student project. For production, you'd use PostgreSQL.
-
-**Q: How is the file stored in S3?**
-A: Using boto3 (AWS SDK for Python), we upload the file to an S3 bucket and store the returned URL in our database.
-
----
 
 ## 📝 License
 
-This project is created for educational purposes as a Final Year Engineering Project.
+This project is created for educational purposes as a 3rd Year Engineering Project.
