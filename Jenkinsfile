@@ -10,7 +10,7 @@ pipeline {
 
         stage('Clone Code') {
             steps {
-                git 'https://github.com/karan8722/DP-2-Cloud-Storage-Project.git'
+                git branch: 'main', url: 'https://github.com/karan8722/DP-2-Cloud-Storage-Project.git'
             }
         }
 
