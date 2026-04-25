@@ -9,7 +9,7 @@ It handles:
   - Analytics dashboard
   - AI-based storage tier prediction
 
-Author: [Your Name]
+Author: karan Biradar
 Final Year Project
 =============================================================================
 """
